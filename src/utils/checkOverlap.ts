@@ -1,4 +1,4 @@
-import { SelectorData } from "../components/ImageContext";
+import { type SelectorData } from "../components/ImageSelectorContext";
 
 type Rectangle = Omit<SelectorData, "id"> & { id: string | null };
 

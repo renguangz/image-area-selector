@@ -1,9 +1,12 @@
 import styled from "@emotion/styled";
 import { ImageSelector } from "./ImageSelector";
-import { useContext } from "react";
-import { ImageContext } from "./ImageContext";
-import { useImageView } from "../hooks/useImageView";
+import { useContext, useRef, useState } from "react";
+import {
+  type SelectorData,
+  ImageSelectorContext,
+} from "./ImageSelectorContext";
 import { colors } from "../utils/colors";
+import { useDragSelector } from "../hooks/useDragSelector";
 
 const CONTENT_WIDTH = 355;
 
@@ -23,70 +26,75 @@ const InteractLayer = styled.div<{ $aspectRatio: number }>`
 `;
 
 interface DraggingContainerProps {
-  $width: number;
-  $height: number;
-  $top: number;
-  $left: number;
   $isOverlap: boolean;
 }
 
-const DraggingContainer = styled.div<DraggingContainerProps>`
+const DraggingContainer = styled.div<
+  DraggingContainerProps & Omit<SelectorData, "id">
+>`
   width: ${(props) => props.$width}px;
   height: ${(props) => props.$height}px;
   position: absolute;
-  top: ${(props) => props.$top}px;
-  left: ${(props) => props.$left}px;
+  top: ${(props) => props.$y}px;
+  left: ${(props) => props.$x}px;
   border: 1px dashed
     ${(props) => (props.$isOverlap ? colors.error : colors.primary)};
   pointerevents: none;
 `;
 
 interface ImageViewerProps {
+  interactAspectRatio: number;
   children: JSX.Element;
 }
 
-export function ImageViewer({ children }: ImageViewerProps) {
-  const {
-    imagePreview,
-    selectors,
-    activeSelector,
-    setActiveSelector,
-    setSelectors,
-  } = useContext(ImageContext);
+export function ImageViewer({
+  interactAspectRatio,
+  children,
+}: ImageViewerProps) {
+  const { selectors, setSelectors } = useContext(ImageSelectorContext);
 
-  const { imgRef, isDragging, isOverlap, startPos, endPos, handleMouseDown } =
-    useImageView();
+  const [activeSelector, setActiveSelector] = useState<string | null>(null);
+
+  const mediaRef = useRef<HTMLDivElement>(null);
+
+  const { dragging, isOverlap, startPos, endPos, handleDragSizeStart } =
+    useDragSelector({
+      mediaRef,
+      selectors,
+      setSelectors,
+      setActiveSelector,
+    });
 
   return (
     <Container>
       {children}
       <InteractLayer
-        $aspectRatio={imagePreview.aspectRatio}
-        ref={imgRef}
-        onMouseDown={handleMouseDown}
+        $aspectRatio={interactAspectRatio}
+        ref={mediaRef}
+        onMouseDown={handleDragSizeStart}
       />
       {selectors.map(({ id, $width, $height, $x, $y }, index) => (
         <ImageSelector
           key={id}
           id={id}
           index={index}
-          mediaRef={imgRef}
+          mediaRef={mediaRef}
           focus={activeSelector === id}
           setActiveSelector={setActiveSelector}
           selectors={selectors}
           setSelectors={setSelectors}
-          $width={$width}
-          $height={$height}
           $x={$x}
           $y={$y}
+          $width={$width}
+          $height={$height}
         />
       ))}
-      {isDragging && (
+      {dragging === "RESIZE" && (
         <DraggingContainer
           $width={Math.abs(endPos.x - startPos.x)}
           $height={Math.abs(endPos.y - startPos.y)}
-          $left={Math.min(startPos.x, endPos.x)}
-          $top={Math.min(startPos.y, endPos.y)}
+          $x={Math.min(startPos.x, endPos.x)}
+          $y={Math.min(startPos.y, endPos.y)}
           $isOverlap={isOverlap}
         />
       )}

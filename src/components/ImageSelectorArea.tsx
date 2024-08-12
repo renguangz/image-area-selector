@@ -1,13 +1,13 @@
 import styled from "@emotion/styled";
 import { ImageUploader } from "./ImageUploader";
 import { ImageViewer } from "./ImageViewer";
-import { useContext } from "react";
-import { ImageContext } from "./ImageContext";
+import { useState } from "react";
 
 const Container = styled.div`
   background-color: #f4f9fa;
   width: 433px;
   height: 792px;
+  overflow-x: hidden;
   overflow-y: auto;
 `;
 
@@ -42,8 +42,18 @@ const Image = styled.img`
   pointer-events: none;
 `;
 
+export type ImagePreviewType = {
+  imageFile: File | null;
+  src: string | null;
+  aspectRatio: number;
+};
+
 export function ImageSelectorArea() {
-  const { imagePreview } = useContext(ImageContext);
+  const [imagePreview, setImagePreview] = useState<ImagePreviewType>({
+    imageFile: null,
+    src: null,
+    aspectRatio: 0,
+  });
 
   return (
     <Container>
@@ -52,11 +62,11 @@ export function ImageSelectorArea() {
       </HeaderContainer>
       <ContentContainer>
         {imagePreview.imageFile && imagePreview.src ? (
-          <ImageViewer>
+          <ImageViewer interactAspectRatio={imagePreview.aspectRatio}>
             <Image src={imagePreview.src} alt={imagePreview.imageFile.name} />
           </ImageViewer>
         ) : (
-          <ImageUploader />
+          <ImageUploader setImagePreview={setImagePreview} />
         )}
       </ContentContainer>
     </Container>

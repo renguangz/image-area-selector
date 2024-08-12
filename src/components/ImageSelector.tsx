@@ -1,12 +1,12 @@
 import styled from "@emotion/styled";
-import { type RefObject } from "react";
-import { type SelectorData } from "./ImageContext";
-import {
-  type ResizeDirection,
-  useImageSelector,
-} from "../hooks/useImageSelector";
+import { type RefObject, memo } from "react";
+import { type SelectorData } from "./ImageSelectorContext";
 import { colors } from "../utils/colors";
 import { DeleteIcon } from "./Icons";
+import {
+  type ResizeDirection,
+  useDragSelector,
+} from "../hooks/useDragSelector";
 
 export interface ContainerProps extends Omit<SelectorData, "id"> {
   $isOverlap: boolean;
@@ -72,12 +72,12 @@ const IndexContainer = styled.div`
   justify-content: center;
   min-width: 20px;
   min-height: 20px;
+  user-select: none;
+  pointer-events: none;
 `;
 
 const Index = styled.span`
   color: #000;
-  user-select: none;
-  pointer-events: none;
 `;
 
 const DeleteButton = styled.button`
@@ -107,28 +107,55 @@ const RESIZE_TYPES: ResizeDirection[] = [
 
 export type ImageSelectorProps = SelectorData & {
   index: number;
-  mediaRef: RefObject<HTMLElement>;
+  mediaRef: RefObject<HTMLDivElement>;
   focus: boolean;
   setActiveSelector: React.Dispatch<React.SetStateAction<string | null>>;
   selectors: SelectorData[];
   setSelectors: React.Dispatch<React.SetStateAction<SelectorData[]>>;
 };
 
-export function ImageSelector(props: ImageSelectorProps) {
-  const { index, focus } = props;
+export const ImageSelector = memo(function (props: ImageSelectorProps) {
+  const {
+    id,
+    index,
+    mediaRef,
+    focus,
+    $x,
+    $y,
+    $width,
+    $height,
+    selectors,
+    setSelectors,
+    setActiveSelector,
+  } = props;
+
   const {
     isOverlap,
-    containerStyle,
-    handleDragStart,
-    handleResizeStart,
-    handleDelete,
-  } = useImageSelector(props);
+    startPos,
+    endPos,
+    handleDragSizeStart,
+    handleDragMoveStart,
+    handleDeleteSelector,
+  } = useDragSelector({
+    mediaRef,
+    selectors,
+    setSelectors,
+    setActiveSelector,
+    id,
+    $x,
+    $y,
+    $width,
+    $height,
+  });
 
   return (
     <Container
-      {...containerStyle}
+      $width={Math.abs(endPos.x - startPos.x)}
+      $height={Math.abs(endPos.y - startPos.y)}
+      $x={Math.min(startPos.x, endPos.x)}
+      $y={Math.min(startPos.y, endPos.y)}
       $isOverlap={isOverlap}
-      onPointerDown={handleDragStart}
+      onMouseDown={handleDragMoveStart}
     >
       <IndexContainer>
         <Index translate="no">{index + 1}</Index>
@@ -138,14 +165,30 @@ export function ImageSelector(props: ImageSelectorProps) {
           key={type}
           type={type}
           $isOverlap={isOverlap}
-          onPointerDown={(e) => handleResizeStart(e, type)}
+          onMouseDown={(e) => handleDragSizeStart(e, type)}
         />
       ))}
       {focus && (
-        <DeleteButton type="button" onClick={handleDelete}>
+        <DeleteButton type="button" onClick={handleDeleteSelector}>
           <DeleteIcon width={16} height={16} color={colors.grey2} />
         </DeleteButton>
       )}
     </Container>
+  );
+}, areEqual);
+
+function areEqual(
+  prevProps: ImageSelectorProps,
+  nextProps: ImageSelectorProps,
+) {
+  return (
+    prevProps.id === nextProps.id &&
+    prevProps.index === nextProps.index &&
+    prevProps.focus === nextProps.focus &&
+    prevProps.$x === nextProps.$x &&
+    prevProps.$y === nextProps.$y &&
+    prevProps.$width === nextProps.$width &&
+    prevProps.$height === nextProps.$height &&
+    prevProps.selectors === nextProps.selectors
   );
 }

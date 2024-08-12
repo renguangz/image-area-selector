@@ -1,5 +1,5 @@
 import styled from "@emotion/styled";
-import { ImageContextProvider } from "../components/ImageContext";
+import { ImageSelectorContextProvider } from "../components/ImageSelectorContext";
 import { JSONDisplay } from "../components/JSONDisplay";
 import { ImageSelectorArea } from "../components/ImageSelectorArea";
 
@@ -11,11 +11,11 @@ const Container = styled.div`
 
 export function ImageSelectorLayout() {
   return (
-    <ImageContextProvider>
+    <ImageSelectorContextProvider>
       <Container>
         <ImageSelectorArea />
         <JSONDisplay />
       </Container>
-    </ImageContextProvider>
+    </ImageSelectorContextProvider>
   );
 }

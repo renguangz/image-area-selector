@@ -1,6 +1,6 @@
 import styled from "@emotion/styled";
 import { useContext } from "react";
-import { ImageContext } from "./ImageContext";
+import { ImageSelectorContext } from "./ImageSelectorContext";
 
 const Container = styled.div`
   background: #2a3948;
@@ -15,7 +15,7 @@ const Pre = styled.pre`
 `;
 
 export function JSONDisplay() {
-  const { selectors } = useContext(ImageContext);
+  const { selectors } = useContext(ImageSelectorContext);
 
   const displaySelectors = selectors.map(({ $x, $y, $width, $height }) => ({
     x: $x,
